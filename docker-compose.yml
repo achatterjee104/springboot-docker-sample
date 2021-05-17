@@ -1,0 +1,28 @@
+version: '2'
+
+services:
+  app:
+    image: 'org.thoughtowrks.induction/sample:v0.0.1'
+    build:   #enable if we want to build the image, here it is build separately
+      context: .
+      dockerfile: build-and-dockerisation.docker
+    container_name: sample
+    depends_on:
+      - book-shop-db-postgres
+    ports:
+    - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://sample-db-postgres:5432/bookshop-db
+    #  - SPRING_DATASOURCE_USERNAME=postgres
+    #  - SPRING_DATASOURCE_PASSWORD=postgres
+    #  - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+
+  db:
+    image: 'postgres'
+    container_name: sample-db-postgres
+    ports:
+    - "5432:5432"   #if need to access the DB from any external client like DBeaver
+    environment:
+      - POSTGRES_USER=postgres    #create user if does not exists
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=bookshop-db   #create database if does not exists

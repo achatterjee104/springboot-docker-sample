@@ -1,0 +1,32 @@
+FROM gradle:7.0-jdk8 AS build
+WORKDIR /workspace
+
+COPY build.gradle .
+RUN gradle clean --refresh-dependencies
+
+COPY src src
+RUN gradle build --no-daemon
+RUN mkdir -p build/exploded && (cd build/exploded; jar -xf ../libs/*.jar)
+
+
+
+FROM openjdk:8-jdk-alpine
+WORKDIR /app
+
+ARG EXPLODED=/workspace/build/exploded
+COPY --from=build ${EXPLODED}/BOOT-INF/lib lib
+COPY --from=build ${EXPLODED}/META-INF META-INF
+COPY --from=build ${EXPLODED}/BOOT-INF/classes .
+
+# if no WORKDIR defined
+#COPY build/exploded/BOOT-INF/lib /app/lib
+#COPY build/exploded/META-INF /app/META-INF
+#COPY build/exploded/BOOT-INF/classes /app
+
+
+EXPOSE 8080
+
+#as WORKDIR is already set as /app, need to come out of it
+WORKDIR ../
+
+ENTRYPOINT ["java", "-cp", "app:app/lib/*", "org.thoughtworks.induction.sample.Application"]
